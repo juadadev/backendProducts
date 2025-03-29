@@ -1,0 +1,10 @@
+.env
+.venv
+venv
+.idea
+pyrightconfig.json
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+*.egg

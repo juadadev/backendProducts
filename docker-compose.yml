@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  fastapi_app:
+    image: fastapi_app:latest
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    secrets:
+      - DB_HOST
+      - DB_USER
+      - DB_PASSWORD
+      - DB_NAME
+      - DB_PORT
+      - AWS_REGION
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - S3_BUCKET_NAME
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST_FILE: "/run/secrets/DB_HOST"
+      DB_USER_FILE: "/run/secrets/DB_USER"
+      DB_PASSWORD_FILE: "/run/secrets/DB_PASSWORD"
+      DB_NAME_FILE: "/run/secrets/DB_NAME"
+      DB_PORT_FILE: "/run/secrets/DB_PORT"
+      AWS_REGION_FILE: "/run/secrets/AWS_REGION"
+      AWS_ACCESS_KEY_ID_FILE: "/run/secrets/AWS_ACCESS_KEY_ID"
+      AWS_SECRET_ACCESS_KEY_FILE: "/run/secrets/AWS_SECRET_ACCESS_KEY"
+      S3_BUCKET_NAME_FILE: "/run/secrets/S3_BUCKET_NAME"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+
+secrets:
+  DB_HOST:
+    external: true
+  DB_USER:
+    external: true
+  DB_PASSWORD:
+    external: true
+  DB_NAME:
+    external: true
+  DB_PORT:
+    external: true
+  AWS_REGION:
+    external: true
+  AWS_ACCESS_KEY_ID:
+    external: true
+  AWS_SECRET_ACCESS_KEY:
+    external: true
+  S3_BUCKET_NAME:
+    external: true
