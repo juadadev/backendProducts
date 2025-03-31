@@ -20,8 +20,8 @@ def get_all_products(db: Session = Depends(get_db)):
 
 # 📌 Obtener un producto por ID
 @router_product.get("/{product_id}", response_model=ProductResponse)
-def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+def get_product(product_id: str, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id_product == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
@@ -30,19 +30,28 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 # 📌 Crear un nuevo producto
 @router_product.post("/", response_model=ProductResponse)
 def create_product(product: ProductCreate, db: Session = Depends(get_db)):
-    new_product = Product(**product.model_dump())
+    # Usa el `id_product` enviado desde el frontend
+    new_product = Product(
+        id_product=product.id_product,  # Usa el mismo id_product que fue enviado
+        name=product.name,
+        price=product.price,
+        quantity=product.quantity,
+        description=product.description
+    )
+
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
+
     return new_product
 
 
 # 📌 Actualizar un producto existente
 @router_product.put("/{product_id}", response_model=ProductResponse)
 def update_product(
-    product_id: int, product: ProductUpdate, db: Session = Depends(get_db)
+    product_id: str, product: ProductUpdate, db: Session = Depends(get_db)
 ):
-    existing_product = db.query(Product).filter(Product.id == product_id).first()
+    existing_product = db.query(Product).filter(Product.id_product == product_id).first()
     if not existing_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -57,8 +66,8 @@ def update_product(
 
 # 📌 Eliminar un producto
 @router_product.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+def delete_product(product_id: str, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id_product == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     db.delete(product)

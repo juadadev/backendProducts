@@ -13,5 +13,5 @@ dynamodb = boto3.resource(
 )
 
 # 🔹 Conectar con la tabla de productos
-TABLE_NAME = "product"  # Asegúrate de que esta tabla existe en DynamoDB
+TABLE_NAME = os.getenv("TABLE_NAME")  # Asegúrate de que esta tabla existe en DynamoDB
 table = dynamodb.Table(TABLE_NAME)

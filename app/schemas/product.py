@@ -4,6 +4,7 @@ from typing import Optional
 
 # ✅ Modelo para Crear Producto (sin ID porque se genera automáticamente)
 class ProductCreate(BaseModel):
+    id_product: str  # ID del producto enviado desde el frontend
     name: str
     price: int
     quantity: int
@@ -20,12 +21,12 @@ class ProductUpdate(BaseModel):
 
 # ✅ Modelo para Borrar Producto (solo se necesita el ID)
 class ProductDelete(BaseModel):
-    id: int
+    id_product: str
 
 
 # ✅ Modelo para Consultar un Producto (devuelve toda la info)
 class ProductResponse(BaseModel):
-    id: int
+    id_product: str
     name: str
     price: int
     quantity: int

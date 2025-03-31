@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from ..database.database_dynamodb import table 
+from ..database.database_dynamodb import table, dynamodb
 from ..models.product_dynamo import ProductDynamo, ProductUpdateDynamo
 from boto3.dynamodb.conditions import Key
 from decimal import Decimal
@@ -9,7 +9,6 @@ router_product_dynamo = APIRouter(
     tags=["products-dynamo"],
     responses={404: {"description": "Not found"}},
 )
-
 
 # 📌 Obtener todos los productos
 @router_product_dynamo.get("/")
@@ -38,38 +37,56 @@ def get_product(product_id: str):
     product = response["Item"]
     return convert_decimals(product)
 
-
 # 📌 Crear un nuevo producto
 @router_product_dynamo.post("/")
 def create_product(product: ProductDynamo):
     table.put_item(Item=product.model_dump())
     return {"message": "Product created", "product": product}
 
+from fastapi import HTTPException
+from boto3.dynamodb.conditions import Key
 
 # 📌 Actualizar un producto existente
 @router_product_dynamo.put("/{product_id}")
 def update_product(product_id: str, product_update: ProductUpdateDynamo):
     existing_product = table.get_item(Key={"id_product": product_id})
+    
     if "Item" not in existing_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # Actualizamos solo los campos proporcionados
+    # Inicializamos la expresión de actualización y los valores
     update_expression = "SET "
     expression_attribute_values = {}
+    expression_attribute_names = {}
 
+    # Iteramos sobre los campos a actualizar
     for key, value in product_update.model_dump(exclude_unset=True).items():
-        update_expression += f"{key} = :{key}, "
+        # Verificamos si la clave es una palabra reservada
+        if key == "name":
+            expression_attribute_names["#name"] = key
+            update_expression += "#name = :name, "
+        else:
+            update_expression += f"{key} = :{key}, "
+        
+        # Agregamos el valor al diccionario de valores
         expression_attribute_values[f":{key}"] = value
 
+    # Quitamos la última coma de la expresión de actualización
     update_expression = update_expression.rstrip(", ")
 
-    table.update_item(
-        Key={"id_product": product_id},
-        UpdateExpression=update_expression,
-        ExpressionAttributeValues=expression_attribute_values,
-    )
-    
+    # Ejecutamos la actualización en DynamoDB
+    try:
+        table.update_item(
+            Key={"id_product": product_id},
+            UpdateExpression=update_expression,
+            ExpressionAttributeNames=expression_attribute_names,
+            ExpressionAttributeValues=expression_attribute_values,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating product: {str(e)}")
+
     return {"message": "Product updated"}
+
 
 
 # 📌 Eliminar un producto

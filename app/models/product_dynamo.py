@@ -3,7 +3,7 @@ from typing import Optional
 
 # 🔹 Modelo Pydantic para DynamoDB
 class ProductDynamo(BaseModel):
-    id: str  # DynamoDB usa strings como clave primaria
+    id_product: str  # DynamoDB usa strings como clave primaria
     name: str
     price: int
     quantity: int
