@@ -19,7 +19,10 @@ services:
       - S3_BUCKET_NAME
       - TABLE_NAME
     ports:
-      - "8000:8000"
+      - target: 8000
+        published: 8000
+        protocol: tcp
+        mode: host
     environment:
       PYTHONPATH: "/app"
       DB_HOST_FILE: "/run/secrets/DB_HOST"
