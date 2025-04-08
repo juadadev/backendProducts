@@ -9,7 +9,7 @@ variables:
   DOCKER_DRIVER: overlay2 # Usar un driver adecuado para Docker-in-Docker
 
 before_script:
-  - echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin docker.io
+  - echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
 
 build:
   stage: build
@@ -17,7 +17,11 @@ build:
   services:
     - docker:dind
   script:
+    # Verifica que el Dockerfile exista en la ruta correcta
+    - ls -l # Verifica el contenido del directorio
     - docker build -t "$DOCKER_REGISTRY/$DOCKER_IMAGE:$DOCKER_TAG" .
+    # Verifica que la imagen se construyó correctamente
+    - docker images
 
 push:
   stage: push
@@ -25,6 +29,8 @@ push:
   services:
     - docker:dind
   script:
+    # Verifica que la imagen existe antes de empujarla
+    - docker images
     - docker push "$DOCKER_REGISTRY/$DOCKER_IMAGE:$DOCKER_TAG"
   only:
-    - main # Opcional: solo ejecuta en la rama master
+    - main # Asegúrate de usar la rama correcta (main o master)
