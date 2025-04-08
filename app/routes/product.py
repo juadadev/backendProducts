@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from ..models.product import Product
-from ..schemas.product import ProductCreate, ProductUpdate, ProductResponse
-from ..database.database import get_db
+from app.models.product import Product
+from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
+from app.database.database import get_db
 
 router_product = APIRouter(
     prefix="/products",
@@ -36,7 +36,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
         name=product.name,
         price=product.price,
         quantity=product.quantity,
-        description=product.description
+        description=product.description,
     )
 
     db.add(new_product)
@@ -51,7 +51,9 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 def update_product(
     product_id: str, product: ProductUpdate, db: Session = Depends(get_db)
 ):
-    existing_product = db.query(Product).filter(Product.id_product == product_id).first()
+    existing_product = (
+        db.query(Product).filter(Product.id_product == product_id).first()
+    )
     if not existing_product:
         raise HTTPException(status_code=404, detail="Product not found")
 
