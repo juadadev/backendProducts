@@ -23,12 +23,7 @@ BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 def backup_data(db: Session = Depends(get_db)):
     # Obtener los datos de la base de datos
     productos = db.query(Product).all()
-    data = [{"id": p.id, "name": p.name , "price": p.price, "quantity": p.quantity , "description": p.description} for p in productos]
- 
-    # Guardar en un archivo temporal
-    #file_path = "/tmp/backup.json"
-    #with open(file_path, "w") as f:
-    #    json.dump(data, f)
+    data = [{"id_product": p.id_product, "name": p.name , "price": p.price, "quantity": p.quantity , "description": p.description} for p in productos]
  
    # Convertir a JSON en memoria
     json_data = json.dumps(data)
