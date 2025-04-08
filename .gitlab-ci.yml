@@ -1,36 +1,19 @@
 stages:
   - build
-  - push
 
 variables:
-  DOCKER_IMAGE: "juadadev/backendproducts"
-  DOCKER_TAG: "latest"
-  DOCKER_REGISTRY: docker.io
-  DOCKER_DRIVER: overlay2 # Usar un driver adecuado para Docker-in-Docker
+  IMAGE_NAME: "juadadev/backendproducts" # Sin ':latest', para que el tag se maneje por separado
+  DOCKER_REGISTRY: "docker.io" # Esto es opcional si usas Docker Hub
+  DOCKER_TAG: "latest" # Puedes definir el tag o usar otro como 'v1.0', etc.
 
-before_script:
-  - echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
-
+# Job para construir la imagen Docker
 build:
   stage: build
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
   script:
-    # Verifica que el Dockerfile exista en la ruta correcta
-    - ls -l # Verifica el contenido del directorio
-    - docker build -t "$DOCKER_REGISTRY/$DOCKER_IMAGE:$DOCKER_TAG" .
-    # Verifica que la imagen se construyó correctamente
-    - docker images
-
-push:
-  stage: push
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    # Verifica que la imagen existe antes de empujarla
-    - docker images
-    - docker push "$DOCKER_REGISTRY/$DOCKER_IMAGE:$DOCKER_TAG"
-  only:
-    - main # Asegúrate de usar la rama correcta (main o master)
+    - docker build -t "$DOCKER_HUB_USERNAME/$IMAGE_NAME:$DOCKER_TAG" .
+    - docker push "$DOCKER_HUB_USERNAME/$IMAGE_NAME:$DOCKER_TAG"
