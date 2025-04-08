@@ -11,7 +11,7 @@ build:
   services:
     - docker:dind
   before_script:
-    - docker login -u "$DOCKER_HUB_USERNAME" -p "$DOCKER_HUB_TOKEN" docker.io
+    - echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin docker.io
   script:
     - docker build -t "$IMAGE_NAME" .
     - docker push "$IMAGE_NAME"
