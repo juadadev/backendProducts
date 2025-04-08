@@ -2,7 +2,7 @@ stages:
   - build
 
 variables:
-  IMAGE_NAME: "$CI_REGISTRY_IMAGE:latest"
+  IMAGE_NAME: "juadadev/backendproducts:latest"
 
 # Job para construir la imagen Docker
 build:
@@ -11,7 +11,7 @@ build:
   services:
     - docker:dind
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker login -u "$DOCKER_HUB_USERNAME" -p "$DOCKER_HUB_TOKEN" docker.io
   script:
     - docker build -t "$IMAGE_NAME" .
     - docker push "$IMAGE_NAME"
