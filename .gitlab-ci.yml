@@ -2,7 +2,7 @@ stages:
   - build
 
 variables:
-  IMAGE_NAME: "$CI_REGISTRY_IMAGE/imageproduct:latest"
+  IMAGE_NAME: "$CI_REGISTRY_IMAGE:latest"
 
 # Job para construir la imagen Docker
 build:

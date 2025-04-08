@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   fastapi_app:
-    image: registry.gitlab.com/unicesarcol/cloud/cloud-scadena-202501-mj/team1/backendproducts/imageproduct:latest
+    image: registry.gitlab.com/unicesarcol/cloud/cloud-scadena-202501-mj/team1/backendproducts:latest
     deploy:
       replicas: 3
       restart_policy:
