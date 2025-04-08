@@ -2,7 +2,7 @@ stages:
   - build
 
 variables:
-  IMAGE_NAME: "juadadev/backendproducts" # Sin ':latest', para que el tag se maneje por separado
+  IMAGE_NAME: "backendproducts" # Sin ':latest', para que el tag se maneje por separado
   DOCKER_REGISTRY: "docker.io" # Esto es opcional si usas Docker Hub
   DOCKER_TAG: "latest" # Puedes definir el tag o usar otro como 'v1.0', etc.
 
