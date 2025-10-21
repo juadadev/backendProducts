@@ -1,10 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
 
 
 # ✅ Modelo para Crear Producto (sin ID porque se genera automáticamente)
 class ProductCreate(BaseModel):
-    id_product: str  # ID del producto enviado desde el frontend
+    id_product: str | None = None  # ID del producto enviado desde el frontend
     name: str
     price: int
     quantity: int
@@ -13,10 +12,10 @@ class ProductCreate(BaseModel):
 
 # ✅ Modelo para Actualizar Producto (todos los campos opcionales)
 class ProductUpdate(BaseModel):
-    name: Optional[str] = None
-    price: Optional[int] = None
-    quantity: Optional[int] = None
-    description: Optional[str] = None
+    name: str | None = None
+    price: int | None = None
+    quantity: int | None = None
+    description: str | None = None
 
 
 # ✅ Modelo para Borrar Producto (solo se necesita el ID)
