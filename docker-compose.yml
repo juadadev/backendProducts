@@ -1,64 +1,42 @@
-version: "3.8"
-
 services:
-  fastapi_app:
-    image: juadadev/backendproducts:latest # Imagen desde Docker Hub
-    deploy:
-      replicas: 3
-      restart_policy:
-        condition: on-failure
-    secrets:
-      - DB_HOST
-      - DB_USER
-      - DB_PASSWORD
-      - DB_NAME
-      - DB_PORT
-      - AWS_REGION
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY
-      - S3_BUCKET_NAME
-      - TABLE_NAME
+  db:
+    image: mysql:8.0
+    container_name: productdb-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE} # Create automatically the database
     ports:
-      - target: 8000
-        published: 8000
-        protocol: tcp
-        mode: host
+      - "3306:3306"
+    volumes:
+      - productdb_data:/var/lib/mysql
+    networks:
+      - products_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+
+  fastapi_app:
+    build: .
+    container_name: backend
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       PYTHONPATH: "/app"
-      DB_HOST_FILE: "/run/secrets/DB_HOST"
-      DB_USER_FILE: "/run/secrets/DB_USER"
-      DB_PASSWORD_FILE: "/run/secrets/DB_PASSWORD"
-      DB_NAME_FILE: "/run/secrets/DB_NAME"
-      DB_PORT_FILE: "/run/secrets/DB_PORT"
-      AWS_REGION_FILE: "/run/secrets/AWS_REGION"
-      AWS_ACCESS_KEY_ID_FILE: "/run/secrets/AWS_ACCESS_KEY_ID"
-      AWS_SECRET_ACCESS_KEY_FILE: "/run/secrets/AWS_SECRET_ACCESS_KEY"
-      S3_BUCKET_NAME_FILE: "/run/secrets/S3_BUCKET_NAME"
-      TABLE_NAME_FILE: "/run/secrets/TABLE_NAME"
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PORT: ${MYSQL_PORT}
+    ports:
+      - "8000:8000"
     networks:
-      - app_network
+      - products_network
 
 networks:
-  app_network:
+  products_network:
 
-secrets:
-  DB_HOST:
-    external: true
-  DB_USER:
-    external: true
-  DB_PASSWORD:
-    external: true
-  DB_NAME:
-    external: true
-  DB_PORT:
-    external: true
-  AWS_REGION:
-    external: true
-  AWS_ACCESS_KEY_ID:
-    external: true
-  AWS_SECRET_ACCESS_KEY:
-    external: true
-  S3_BUCKET_NAME:
-    external: true
-  TABLE_NAME:
-    external: true
+volumes:
+  productdb_data:

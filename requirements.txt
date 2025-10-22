@@ -4,3 +4,4 @@ pymysql==1.1.1
 python-dotenv==0.21.1
 sqlalchemy==2.0.40
 boto3==1.37.23
+cryptography==43.0.0
