@@ -3,8 +3,8 @@ name: Deploy Backend to Manager via Bastion
 on:
   push:
     branches:
-      - main # rama que dispara el despliegue
-  workflow_dispatch: # permite ejecutarlo manualmente desde GitHub
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,32 +14,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # === CONFIGURAR CLAVE SSH ===
+      # 🔐 Crea y verifica la clave privada SSH
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          # Guardar la clave privada eliminando posibles retornos de carro
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/vockey.pem
           chmod 600 ~/.ssh/vockey.pem
-          # Configuración global SSH
-          cat <<EOF > ~/.ssh/config
-          Host *
-            StrictHostKeyChecking no
-            UserKnownHostsFile=/dev/null
-          EOF
+          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
+          echo "✅ Clave SSH creada correctamente:"
+          ls -l ~/.ssh
+          head -n 1 ~/.ssh/vockey.pem
 
-      # === VERIFICAR CLAVE SSH (opcional, útil para depurar) ===
-      - name: Verify SSH key exists
+      # 🧠 Debug para verificar conectividad con bastion
+      - name: Test SSH connection to Bastion
         run: |
-          echo "Verificando que la clave SSH exista..."
-          ls -l ~/.ssh/
-          head -n 5 ~/.ssh/vockey.pem
+          echo "🔍 Probando conexión al bastion..."
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "echo '✅ Conectado al bastion exitosamente'"
 
-      # === DEPLOY AL MANAGER VÍA BASTION ===
+      # 🚀 Despliegue al manager a través del bastion
       - name: Deploy via Bastion to Manager
         run: |
+          echo "🚀 Conectando al manager a través del bastion..."
           ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
             "ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} \
-            'cd /home/ec2-user/backend && git pull origin main && docker stack deploy -c deploy-stack.yml products'"
+            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products'"
