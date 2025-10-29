@@ -1,0 +1,32 @@
+name: Deploy Backend to Manager via Bastion
+
+on:
+  push:
+    branches:
+      - main # rama que dispara el despliegue
+  workflow_dispatch: # permite ejecutarlo manualmente desde GitHub
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/vockey.pem
+          chmod 600 ~/.ssh/vockey.pem
+          echo "Host *" > ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+
+      - name: Deploy via Bastion to Manager
+        run: |
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
+            "ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} \
+            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products'"
