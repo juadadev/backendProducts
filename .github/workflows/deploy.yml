@@ -3,8 +3,8 @@ name: Deploy Backend to Manager via Bastion
 on:
   push:
     branches:
-      - main # rama que dispara el despliegue
-  workflow_dispatch: # permite ejecutarlo manualmente desde GitHub
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,12 +25,25 @@ jobs:
 
       - name: 🚀 Desplegar stack Docker Swarm desde Bastion
         run: |
-          echo "Conectando al Bastion..."
-          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "
-            echo 'Conectando al Manager desde el Bastion...'
-            ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} '
-              cd /home/ec2-user &&
-              echo Ejecutando deploy de Docker Stack... &&
-              docker stack deploy -c docker-stack.yaml mystack --with-registry-auth
-            '
-          "
+          echo "🔐 Copiando clave temporalmente al Bastion..."
+          scp -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ~/.ssh/vockey.pem \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}:/tmp/vockey.pem
+
+          echo "🛠️ Ajustando permisos en Bastion..."
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "chmod 600 /tmp/vockey.pem"
+
+          echo "🚀 Conectando desde Bastion al Manager..."
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "
+              ssh -i /tmp/vockey.pem -o StrictHostKeyChecking=no \
+              ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} '
+                cd /home/ec2-user &&
+                docker stack deploy -c docker-stack.yaml mystack --with-registry-auth &&
+                docker stack services mystack
+              '
+            "
+
+          echo "🧹 Limpiando clave temporal del Bastion..."
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} 'rm -f /tmp/vockey.pem'
