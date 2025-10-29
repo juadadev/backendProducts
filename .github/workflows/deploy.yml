@@ -1,10 +1,10 @@
-name: Deploy Backend to Manager via Bastion
+name: 🚀 Deploy Backend to Manager via Bastion (Docker Swarm)
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main # Despliega automáticamente al hacer push en main
+  workflow_dispatch: # Permite ejecutarlo manualmente desde GitHub Actions
 
 jobs:
   deploy:
@@ -19,9 +19,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/vockey.pem
           chmod 600 ~/.ssh/vockey.pem
-          echo "Host *" > ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          cat <<EOF > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+          EOF
 
       - name: 🚀 Desplegar stack Docker Swarm desde Bastion
         run: |
@@ -39,8 +41,10 @@ jobs:
               ssh -i /tmp/vockey.pem -o StrictHostKeyChecking=no \
               ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} '
                 cd /home/ec2-user &&
-                docker stack deploy -c docker-stack.yaml mystack --with-registry-auth &&
-                docker stack services mystack
+                echo \"📦 Desplegando stack Docker Swarm...\"
+                sudo docker stack deploy -c docker-stack.yaml mystack --with-registry-auth &&
+                echo \"✅ Stack desplegado correctamente:\"
+                sudo docker stack services mystack
               '
             "
 
