@@ -14,29 +14,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🔐 Crea y verifica la clave privada SSH
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/vockey.pem
           chmod 600 ~/.ssh/vockey.pem
           echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
-          echo "✅ Clave SSH creada correctamente:"
-          ls -l ~/.ssh
-          head -n 1 ~/.ssh/vockey.pem
 
-      # 🧠 Debug para verificar conectividad con bastion
-      - name: Test SSH connection to Bastion
+      - name: Copy key to Bastion and Deploy
         run: |
-          echo "🔍 Probando conexión al bastion..."
-          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "echo '✅ Conectado al bastion exitosamente'"
+          echo "🔐 Copiando clave privada temporalmente al Bastion..."
+          scp -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ~/.ssh/vockey.pem \
+            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}:/tmp/vockey.pem
 
-      # 🚀 Despliegue al manager a través del bastion
-      - name: Deploy via Bastion to Manager
-        run: |
-          echo "🚀 Conectando al manager a través del bastion..."
+          echo "🚀 Conectando desde Bastion al Manager..."
           ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
-            "ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
+            "chmod 600 /tmp/vockey.pem && \
+            ssh -i /tmp/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} \
-            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products'"
+            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products && echo ✅ Despliegue completado' && \
+            rm -f /tmp/vockey.pem"
+
+          echo "🧹 Limpieza completada en el Bastion"
