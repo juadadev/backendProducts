@@ -14,19 +14,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # === CONFIGURAR CLAVE SSH ===
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/vockey.pem
+          # Guardar la clave privada eliminando posibles retornos de carro
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/vockey.pem
           chmod 600 ~/.ssh/vockey.pem
-          echo "Host *" > ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          # Configuración global SSH
+          cat <<EOF > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+          EOF
 
+      # === VERIFICAR CLAVE SSH (opcional, útil para depurar) ===
+      - name: Verify SSH key exists
+        run: |
+          echo "Verificando que la clave SSH exista..."
+          ls -l ~/.ssh/
+          head -n 5 ~/.ssh/vockey.pem
+
+      # === DEPLOY AL MANAGER VÍA BASTION ===
       - name: Deploy via Bastion to Manager
         run: |
           ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
             "ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
             ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} \
-            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products'"
+            'cd /home/ec2-user/backend && git pull origin main && docker stack deploy -c deploy-stack.yml products'"
