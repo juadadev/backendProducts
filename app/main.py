@@ -20,6 +20,7 @@ app.include_router(router_backup)
 # CORS
 allow_origins = [
     "http://localhost:5173",
+    "http://team1-alb-1782198912.us-east-1.elb.amazonaws.com",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:80",
     "https://midominio.com",
@@ -30,8 +31,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
