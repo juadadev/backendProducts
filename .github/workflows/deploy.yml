@@ -3,37 +3,34 @@ name: Deploy Backend to Manager via Bastion
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main # rama que dispara el despliegue
+  workflow_dispatch: # permite ejecutarlo manualmente desde GitHub
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up SSH key
+      - name: 🔐 Configurar clave SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' > ~/.ssh/vockey.pem
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/vockey.pem
           chmod 600 ~/.ssh/vockey.pem
-          echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" > ~/.ssh/config
+          echo "Host *" > ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
 
-      - name: Copy key to Bastion and Deploy
+      - name: 🚀 Desplegar stack Docker Swarm desde Bastion
         run: |
-          echo "🔐 Copiando clave privada temporalmente al Bastion..."
-          scp -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ~/.ssh/vockey.pem \
-            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }}:/tmp/vockey.pem
-
-          echo "🚀 Conectando desde Bastion al Manager..."
-          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
-            "chmod 600 /tmp/vockey.pem && \
-            ssh -i /tmp/vockey.pem -o StrictHostKeyChecking=no \
-            ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} \
-            'cd /home/ec2-user/backend && docker stack deploy -c deploy-stack.yml products && echo ✅ Despliegue completado' && \
-            rm -f /tmp/vockey.pem"
-
-          echo "🧹 Limpieza completada en el Bastion"
+          echo "Conectando al Bastion..."
+          ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} "
+            echo 'Conectando al Manager desde el Bastion...'
+            ssh -i ~/.ssh/vockey.pem -o StrictHostKeyChecking=no ${{ secrets.MANAGER_USER }}@${{ secrets.MANAGER_PRIVATE_IP }} '
+              cd /home/ec2-user &&
+              echo Ejecutando deploy de Docker Stack... &&
+              docker stack deploy -c docker-stack.yaml mystack --with-registry-auth
+            '
+          "
